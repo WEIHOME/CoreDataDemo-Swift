@@ -30,13 +30,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         let fetch = NSFetchRequest(entityName: "Fruits")
         
-        var error: NSError?
-        let result = managedContext.executeFetchRequest(fetch, error: &error) as? [NSManagedObject]
+        let result = try? managedContext.executeFetchRequest(fetch) as? [NSManagedObject]
         
         if let results = result{
-            fruits = results
+            fruits = results!
         }else{
-            println("Could not fetch \(error), \(error!.userInfo)")
+            print("Could not fetch")
         }
         
     }
@@ -58,7 +57,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
 //        var cell = tableView.dequeueReusableCellWithIdentifier("Cell") as! UITableViewCell
         let cell = UITableViewCell(style: UITableViewCellStyle.Subtitle, reuseIdentifier: "Cell")
         cell.textLabel?.text = fruits[indexPath.row].valueForKey("name") as? String
-        var quantity = fruits[indexPath.row].valueForKey("quantity") as? Int
+        let quantity = fruits[indexPath.row].valueForKey("quantity") as? Int
         cell.detailTextLabel?.text = "\(quantity!)"
 
         return cell
@@ -66,22 +65,19 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     @IBAction func showAddingDialog(sender: UIBarButtonItem) {
         
-        var dialog = UIAlertController(title: "Adding Fruit", message: "Adding", preferredStyle: UIAlertControllerStyle.Alert)
+        let dialog = UIAlertController(title: "Adding Fruit", message: "Adding", preferredStyle: UIAlertControllerStyle.Alert)
         
-        var addFruitAction = UIAlertAction(title: "Add", style: UIAlertActionStyle.Default) { (_) -> Void in
+        let addFruitAction = UIAlertAction(title: "Add", style: UIAlertActionStyle.Default) { (_) -> Void in
+        
+            let textFieldForName = dialog.textFields![0]
+            let textFieldForQuantity = dialog.textFields![1]
+
             
-            let textFieldForName = dialog.textFields![0] as! UITextField
-            let textFieldForQuantity = dialog.textFields![1] as! UITextField
-            
-            
-            println(textFieldForName.text)
-            println(textFieldForQuantity.text.toInt()!)
-            
-            self.addFruit(textFieldForName.text, quantity: textFieldForQuantity.text.toInt()!)
+            self.addFruit(textFieldForName.text!, quantity: Int(textFieldForQuantity.text!)!)
         }
         
         
-        var cancelAddingAction = UIAlertAction(title: "Cancel", style: UIAlertActionStyle.Cancel) { (_) -> Void in
+        let cancelAddingAction = UIAlertAction(title: "Cancel", style: UIAlertActionStyle.Cancel) { (_) -> Void in
             
         }
         
@@ -113,14 +109,16 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         fruit.setValue(name, forKey: "name")
         fruit.setValue(quantity, forKey: "quantity")
         
-        var error: NSError?
-        if managedContext?.save(&error) == false{
-            print("Could not save \(error), \(error?.userInfo)")
+        let success = try? managedContext?.save()
+        
+        if success == nil{
+            print("error")
+            return
         }
         
         fruits.append(fruit)
         self.uiTableView.reloadData()
-        println(fruits)
+        print(fruits)
     }
     
     
